@@ -1,34 +1,43 @@
-# Танки (Tanks) Game
+# Tanks Game
 
 A simple tank game built with Python and Pygame.
 
 ## How to Run
 
-1. Make sure you have Python and Pygame installed:
-   ```sh
+1. Install Python 3 and Pygame:
+   ```
    pip install pygame
    ```
 
-2. Place the following files in the same directory:
+2. Make sure the following files are in the same folder:
    - `main.py`
-   - `ptank.png`
-   - `etank.png`
-   - `bullet.png`
+   - `ptank.png` — player tank image
+   - `etank.png` — enemy tank image
+   - `bullet.png` — bullet image
+   - `back.png` — background image
 
 3. Run the game:
-   ```sh
+   ```
    python main.py
    ```
 
 ## Controls
 
-- Arrow keys: Move the player tank
-- A / D: Rotate the player tank
-- Space: Shoot
+- Arrow keys — move the player tank
+- A / D — rotate the player tank's turret
+- Space — shoot
 
-## Objective
+## Game Objective
 
-- Destroy the enemy tank by shooting it.
-- Avoid collisions with the enemy tank.
+- Destroy the enemy tank while avoiding its shots.
+- The game ends if either the player or the enemy is destroyed.
 
-Enjoy
+## Features
+
+- The enemy shoots at the player and rotates its turret towards the shot.
+- Both tanks have health bars.
+- The game uses a background image (`back.png`).
+
+---
+
+Made with Python and Pygame.

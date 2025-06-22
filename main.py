@@ -24,7 +24,8 @@ def load_image(path, size):
 
 player_tank_img = load_image("ptank.png", (50, 50))
 enemy_tank_img = load_image("etank.png", (50, 50))
-bullet_img = load_image("bullet.png", (10, 10))
+bullet_img = load_image("bullet.png ", (10, 10))
+background_img = load_image("back.png", (WIDTH, HEIGHT))
 
 class Tank:
     def __init__(self, image, x, y, speed):
@@ -37,7 +38,7 @@ class Tank:
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.angle = 0
         self.health = 100
-    def draw(self):
+    def draw(self):  
         rotated_image = pygame.transform.rotate(self.image, self.angle)
         new_rect = rotated_image.get_rect(center=self.rect.center)
         screen.blit(rotated_image, new_rect.topleft)
@@ -67,13 +68,14 @@ class Tank:
         self.rect.y = self.y
 
 class Bullet:
-    def __init__(self, x, y, angle, speed=7):
+    def __init__(self, x, y, angle, speed=7, owner="player"):
         self.image = bullet_img
         self.x = x
         self.y = y
         self.angle = angle
         self.speed = speed
         self.rect = pygame.Rect(self.x, self.y, 10, 10)
+        self.owner = owner  # "player" or "enemy"
 
     def move(self):
         direction = pygame.math.Vector2(1, 0).rotate(-self.angle)
@@ -85,6 +87,12 @@ class Bullet:
     def draw(self):
         screen.blit(self.image, (self.x, self.y))
 
+def get_angle_to_target(src_x, src_y, target_x, target_y):
+    dx = target_x - src_x
+    dy = target_y - src_y
+    angle = pygame.math.Vector2(dx, dy).angle_to(pygame.math.Vector2(1, 0))
+    return angle
+
 def main():
     clock = pygame.time.Clock()
     running = True
@@ -93,15 +101,19 @@ def main():
     enemy = Tank(enemy_tank_img, random.randint(0, WIDTH - 50), random.randint(0, HEIGHT - 50), 3)
     bullets = []
 
+    enemy_shoot_delay = 1000  # milliseconds
+    enemy_last_shot = pygame.time.get_ticks()
+
     while running:
-        screen.fill(WHITE)
+        # Малюємо фон
+        screen.blit(background_img, (0, 0))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    bullets.append(Bullet(player.x + 25, player.y + 25, player.angle))
+                    bullets.append(Bullet(player.x + 25, player.y + 25, player.angle, owner="player"))
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
@@ -121,6 +133,17 @@ def main():
         enemy_dy = random.choice([-enemy.speed, 0, enemy.speed])
         enemy.move(enemy_dx, enemy_dy)
 
+        # Enemy shooting logic: ворог стріляє по гравцю
+        now = pygame.time.get_ticks()
+        if now - enemy_last_shot > enemy_shoot_delay:
+            # Центр гравця та ворога для точного прицілювання
+            player_center = player.rect.center
+            enemy_center = enemy.rect.center
+            angle_to_player = get_angle_to_target(enemy_center[0], enemy_center[1], player_center[0], player_center[1])
+            bullets.append(Bullet(enemy_center[0] - 5, enemy_center[1] - 5, angle_to_player, owner="enemy"))
+            enemy.angle = angle_to_player  # Додаємо поворот башти ворога у напрямку пострілу
+            enemy_last_shot = now
+
         player.draw()
         enemy.draw()
 
@@ -129,12 +152,19 @@ def main():
             bullet.draw()
             if bullet.x < 0 or bullet.x > WIDTH or bullet.y < 0 or bullet.y > HEIGHT:
                 bullets.remove(bullet)
-            elif bullet.rect.colliderect(enemy.rect):
+            elif bullet.owner == "player" and bullet.rect.colliderect(enemy.rect):
                 enemy.health -= 10
+                bullets.remove(bullet)
+            elif bullet.owner == "enemy" and bullet.rect.colliderect(player.rect):
+                player.health -= 10
                 bullets.remove(bullet)
 
         if enemy.health <= 0:
             print("Ворог знищений")
+            running = False
+
+        if player.health <= 0:
+            print("Гравець знищений")
             running = False
 
         if player.rect.colliderect(enemy.rect):
@@ -147,4 +177,4 @@ def main():
     pygame.quit()
 
 if __name__ == "__main__":
-    main()        
+    main()
